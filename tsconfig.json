@@ -1,0 +1,26 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "ESNext",
+    "lib": ["ESNext", "DOM"],
+    "allowJs": false,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "noImplicitAny": true,
+    "sourceMap": true,
+    "baseUrl": ".",
+    "paths": {
+      "@shared/*": ["src/shared/*"],
+      "@renderer/*": ["src/renderer/*"]
+    },
+    "outDir": "dist",
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "strict": true,
+    "jsx": "react-jsx",
+    "types": ["node", "electron"]
+  },
+  "include": ["src/**/*.ts", "src/**/*.tsx", "forge.env.d.ts"],
+  "exclude": ["node_modules", ".vite", "out"]
+}
