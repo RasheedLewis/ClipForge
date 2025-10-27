@@ -24,6 +24,9 @@ export default defineConfig({
     rollupOptions: {
       external: [
         'electron',
+        '@ffmpeg-installer/ffmpeg',
+        '@ffprobe-installer/ffprobe',
+        'fluent-ffmpeg',
         ...builtinModules,
         ...builtinModules.map((moduleName) => `node:${moduleName}`),
       ],

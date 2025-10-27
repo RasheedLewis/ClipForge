@@ -6,6 +6,7 @@ const api: DesktopApi = {
   exportVideo: () => ipcRenderer.invoke('export-video'),
   recordStart: () => ipcRenderer.invoke('record-start'),
   recordStop: () => ipcRenderer.invoke('record-stop'),
+  getMediaMetadata: (mediaPath) => ipcRenderer.invoke('media:getMetadata', mediaPath),
 };
 
 contextBridge.exposeInMainWorld('clipforge', api);
