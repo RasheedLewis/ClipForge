@@ -5,9 +5,10 @@ import type { MediaClip } from '../store/media';
 interface ClipCardProps {
   clip: MediaClip;
   onRemove?: (clipId: string) => void;
+  onAddToTimeline?: (clip: MediaClip) => void;
 }
 
-export const ClipCard: FC<ClipCardProps> = ({ clip, onRemove }) => {
+export const ClipCard: FC<ClipCardProps> = ({ clip, onRemove, onAddToTimeline }) => {
   const { metadata } = clip;
   const resolution =
     metadata.video && metadata.video.width && metadata.video.height
@@ -58,6 +59,15 @@ export const ClipCard: FC<ClipCardProps> = ({ clip, onRemove }) => {
           {onRemove ? (
             <button type="button" className="clip-card__remove" onClick={() => onRemove(clip.id)}>
               Remove
+            </button>
+          ) : null}
+          {onAddToTimeline ? (
+            <button
+              type="button"
+              className="clip-card__action"
+              onClick={() => onAddToTimeline(clip)}
+            >
+              Add to Timeline
             </button>
           ) : null}
         </header>

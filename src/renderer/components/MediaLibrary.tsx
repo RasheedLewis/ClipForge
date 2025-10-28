@@ -4,11 +4,13 @@ import { useMediaStore } from '../store/media';
 import { useMediaImporter } from '../hooks/useMediaImporter';
 import { DropZone } from './DropZone';
 import { ClipCard } from './ClipCard';
+import { useTimelineStore } from '../store/timeline';
 
 export const MediaLibrary: FC = () => {
   const clips = useMediaStore((state) => state.clips);
   const removeClip = useMediaStore((state) => state.removeClip);
   const { importFromDialog, importFromPaths, isImporting } = useMediaImporter();
+  const addTimelineClip = useTimelineStore((state) => state.addClip);
 
   const handleDrop = useCallback(
     (paths: string[]) => {
@@ -45,7 +47,23 @@ export const MediaLibrary: FC = () => {
         ) : (
           <div className="media-library__grid">
             {clips.map((clip) => (
-              <ClipCard key={clip.id} clip={clip} onRemove={removeClip} />
+              <ClipCard
+                key={clip.id}
+                clip={clip}
+                onRemove={removeClip}
+                onAddToTimeline={(mediaClip) => {
+                  const duration = Math.max(mediaClip.metadata.duration ?? 1, 1);
+                  addTimelineClip({
+                    mediaId: mediaClip.id,
+                    duration,
+                    name: mediaClip.name,
+                  });
+                  const timelinePanel = document.getElementById('timeline-panel');
+                  if (timelinePanel) {
+                    timelinePanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                  }
+                }}
+              />
             ))}
           </div>
         )}
