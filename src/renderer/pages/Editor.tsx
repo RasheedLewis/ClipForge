@@ -1,5 +1,6 @@
 import type { FC } from 'react';
 import { TopBar } from '../components/TopBar';
+import { MediaLibrary } from '../components/MediaLibrary';
 
 export const EditorPage: FC = () => (
   <div className="editor-shell">
@@ -9,8 +10,8 @@ export const EditorPage: FC = () => (
         <header className="panel__header">
           <h2>Media Library</h2>
         </header>
-        <div className="panel__content">
-          <p>Import clips to populate your library.</p>
+        <div className="panel__content panel__content--scroll">
+          <MediaLibrary />
         </div>
       </section>
       <section className="panel panel--preview">

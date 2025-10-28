@@ -7,6 +7,8 @@ const api: DesktopApi = {
   recordStart: () => ipcRenderer.invoke('record-start'),
   recordStop: () => ipcRenderer.invoke('record-stop'),
   getMediaMetadata: (mediaPath) => ipcRenderer.invoke('media:getMetadata', mediaPath),
+  getMediaFileUrl: (mediaPath) => ipcRenderer.invoke('media:getFileUrl', mediaPath),
+  resolveDroppedPaths: (uriList) => ipcRenderer.invoke('media:resolveDrop', uriList),
 };
 
 contextBridge.exposeInMainWorld('clipforge', api);

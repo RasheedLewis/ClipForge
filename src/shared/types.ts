@@ -3,7 +3,9 @@ export type RendererIpcChannels =
   | 'export-video'
   | 'record-start'
   | 'record-stop'
-  | 'media:getMetadata';
+  | 'media:getMetadata'
+  | 'media:getFileUrl'
+  | 'media:resolveDrop';
 
 export interface IpcStubResponse {
   status: 'error';
@@ -37,9 +39,11 @@ export interface MediaMetadata {
 }
 
 export interface DesktopApi {
-  importClips: () => Promise<IpcStubResponse>;
+  importClips: () => Promise<IpcResponse<string[]>>;
   exportVideo: () => Promise<IpcStubResponse>;
   recordStart: () => Promise<IpcStubResponse>;
   recordStop: () => Promise<IpcStubResponse>;
   getMediaMetadata: (path: string) => Promise<IpcResponse<MediaMetadata>>;
+  getMediaFileUrl: (path: string) => Promise<IpcResponse<string>>;
+  resolveDroppedPaths: (uriList: string) => Promise<IpcResponse<string[]>>;
 }

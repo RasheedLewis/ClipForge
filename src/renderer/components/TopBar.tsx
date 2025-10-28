@@ -1,47 +1,66 @@
 import type { FC } from 'react';
+import { useMediaImporter } from '../hooks/useMediaImporter';
 
-const actions: Array<{ label: string; handler: () => Promise<void> }> = [
-  {
-    label: 'Import',
-    handler: async () => {
-      const response = await window.clipforge.importClips();
-      console.info(response.message);
-    },
-  },
-  {
-    label: 'Record',
-    handler: async () => {
-      const response = await window.clipforge.recordStart();
-      console.info(response.message);
-    },
-  },
-  {
-    label: 'Export',
-    handler: async () => {
-      const response = await window.clipforge.exportVideo();
-      console.info(response.message);
-    },
-  },
-];
+export const TopBar: FC = () => {
+  const { importFromDialog, isImporting } = useMediaImporter();
 
-export const TopBar: FC = () => (
-  <header className="top-bar">
-    <div className="top-bar__brand">
-      <span className="top-bar__logo">ClipForge</span>
-    </div>
-    <nav className="top-bar__actions">
-      {actions.map((action) => (
+  const handleImport = async () => {
+    await importFromDialog();
+  };
+
+  const handleRecord = async () => {
+    const response = await window.clipforge.recordStart();
+    if (response.status === 'error') {
+      console.warn(response.message);
+    } else {
+      console.info('Recording workflow not yet implemented.');
+    }
+  };
+
+  const handleExport = async () => {
+    const response = await window.clipforge.exportVideo();
+    if (response.status === 'error') {
+      console.warn(response.message);
+    } else {
+      console.info('Export workflow not yet implemented.');
+    }
+  };
+
+  return (
+    <header className="top-bar">
+      <div className="top-bar__brand">
+        <span className="top-bar__logo">ClipForge</span>
+      </div>
+      <nav className="top-bar__actions">
         <button
-          key={action.label}
           type="button"
           className="top-bar__button"
           onClick={() => {
-            void action.handler();
+            void handleImport();
+          }}
+          disabled={isImporting}
+        >
+          {isImporting ? 'Importing…' : 'Import'}
+        </button>
+        <button
+          type="button"
+          className="top-bar__button"
+          onClick={() => {
+            void handleRecord();
           }}
         >
-          {action.label}
+          Record
         </button>
-      ))}
-    </nav>
-  </header>
-);
+        <button
+          type="button"
+          className="top-bar__button"
+          onClick={() => {
+            void handleExport();
+          }}
+        >
+          Export
+        </button>
+      </nav>
+    </header>
+  );
+};

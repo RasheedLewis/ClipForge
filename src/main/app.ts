@@ -1,7 +1,20 @@
-import { app, BrowserWindow, shell } from 'electron';
+import { app, BrowserWindow, protocol, shell } from 'electron';
 import path from 'node:path';
 import started from 'electron-squirrel-startup';
 import { registerIpcHandlers } from './ipc';
+
+protocol.registerSchemesAsPrivileged([
+  {
+    scheme: 'clipforge-media',
+    privileges: {
+      secure: true,
+      standard: true,
+      supportFetchAPI: true,
+      corsEnabled: true,
+      stream: true,
+    },
+  },
+]);
 
 const isDev =
   process.env.NODE_ENV === 'development' || MAIN_WINDOW_VITE_DEV_SERVER_URL !== undefined;
@@ -73,6 +86,26 @@ const bootstrap = async () => {
   await app.whenReady();
 
   app.setAppUserModelId('com.clipforge.desktop');
+  try {
+    protocol.registerFileProtocol('clipforge-media', (request, callback) => {
+      try {
+        const url = new URL(request.url);
+        const encodedPath = url.searchParams.get('path');
+        if (!encodedPath) {
+          callback({ error: -6 });
+          return;
+        }
+
+        const decodedPath = decodeURIComponent(encodedPath);
+        callback({ path: decodedPath });
+      } catch (error) {
+        console.error('Failed to resolve clipforge-media protocol', error);
+        callback({ error: -6 });
+      }
+    });
+  } catch (error) {
+    console.warn('clipforge-media protocol registration skipped:', error);
+  }
   registerIpcHandlers();
 
   createMainWindow();

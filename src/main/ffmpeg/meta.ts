@@ -1,4 +1,5 @@
-import fs from 'node:fs/promises';
+import { constants as fsConstants } from 'node:fs';
+import { access } from 'node:fs/promises';
 import path from 'node:path';
 import ffmpeg from 'fluent-ffmpeg';
 import { ensureFfmpegInPath } from './locate';
@@ -19,7 +20,7 @@ export const getMediaMetadata = async (mediaPath: string): Promise<MediaMetadata
   const absolutePath = path.resolve(mediaPath);
 
   try {
-    await fs.access(absolutePath, fs.constants.R_OK);
+    await access(absolutePath, fsConstants.R_OK);
   } catch {
     throw new Error('Media file is not accessible or does not exist.');
   }
