@@ -45,22 +45,22 @@ It’s designed to **simplify media workflows** — record, trim, arrange, and e
 ## 🧩 Architecture
 
 ```mermaid
-flowchart TD
-  subgraph Renderer[Renderer (React + TS)]
-    UI[UI Components\n(Button, Timeline, Toolbar)]
-    State[Zustand Stores\n(media, timeline, sceneTags)]
-    Preview[VideoPlayer]
+graph TD
+  subgraph Renderer["Renderer<br/>(React + TS)"]
+    UI["UI Components<br/>(Buttons, Timeline, Toolbar)"]
+    State["Zustand Stores<br/>(media, timeline, sceneTags)"]
+    Preview["Preview Player"]
   end
 
-  subgraph Main[Electron Main Process]
-    IPC[IPC Router]
-    FFmpeg[FFmpeg Engine\n(meta, export, concat)]
-    Record[Screen + Webcam Recorder]
+  subgraph Main["Electron Main Process"]
+    IPC["IPC Router"]
+    FFmpeg["FFmpeg Engine<br/>(metadata, export, concat)"]
+    Record["Recorder<br/>(Screen + Webcam)"]
   end
 
-  subgraph System[Host OS]
-    Media[desktopCapturer, getUserMedia]
-    Files[Filesystem]
+  subgraph System["Host OS"]
+    Media["desktopCapturer<br/>+ getUserMedia"]
+    Files["Filesystem"]
   end
 
   UI <--> State
