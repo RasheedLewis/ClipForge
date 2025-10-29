@@ -56,11 +56,8 @@ export const ClipCard: FC<ClipCardProps> = ({ clip, onRemove, onAddToTimeline })
       <div className="clip-card__details">
         <header className="clip-card__header">
           <h3 title={clip.name}>{clip.name}</h3>
-          {onRemove ? (
-            <button type="button" className="clip-card__remove" onClick={() => onRemove(clip.id)}>
-              Remove
-            </button>
-          ) : null}
+        </header>
+        <div className="clip-card__actions">
           {onAddToTimeline ? (
             <button
               type="button"
@@ -70,7 +67,12 @@ export const ClipCard: FC<ClipCardProps> = ({ clip, onRemove, onAddToTimeline })
               Add to Timeline
             </button>
           ) : null}
-        </header>
+          {onRemove ? (
+            <button type="button" className="clip-card__remove" onClick={() => onRemove(clip.id)}>
+              Remove
+            </button>
+          ) : null}
+        </div>
         <dl className="clip-card__meta">
           <div>
             <dt>Duration</dt>
