@@ -15,12 +15,13 @@ interface MediaLibraryState {
   addClips: (clips: MediaClip[]) => void;
   removeClip: (clipId: string) => void;
   clear: () => void;
+  getClip: (clipId: string) => MediaClip | undefined;
 }
 
 const sortByCreatedAtDesc = (clips: MediaClip[]) =>
   [...clips].sort((a, b) => b.createdAt - a.createdAt);
 
-export const useMediaStore = create<MediaLibraryState>((set) => ({
+export const useMediaStore = create<MediaLibraryState>((set, get) => ({
   clips: [],
   addClips: (incoming) =>
     set((state) => {
@@ -39,4 +40,5 @@ export const useMediaStore = create<MediaLibraryState>((set) => ({
       clips: state.clips.filter((clip) => clip.id !== clipId),
     })),
   clear: () => set({ clips: [] }),
+  getClip: (clipId) => get().clips.find((clip) => clip.id === clipId),
 }));

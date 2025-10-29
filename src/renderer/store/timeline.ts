@@ -48,7 +48,6 @@ export const useTimelineStore = create<TimelineState>((set, get) => ({
   playhead: 0,
   zoom: DEFAULT_ZOOM,
   addClip: ({ id, mediaId, duration, name, track = 'main' }) => {
-    console.info('[TimelineStore] addClip', { id, mediaId, duration, name, track });
     set((state) => {
       const clipId = id ?? crypto.randomUUID?.() ?? `clip-${Date.now()}`;
       const start = computeTrackStart(track, state.clips);
@@ -61,8 +60,6 @@ export const useTimelineStore = create<TimelineState>((set, get) => ({
         start,
         track,
       };
-
-      console.info('[TimelineStore] new clip computed', next);
 
       return { clips: [...state.clips, next] };
     });

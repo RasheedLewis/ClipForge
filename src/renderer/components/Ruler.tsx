@@ -3,7 +3,8 @@ import type { FC } from 'react';
 interface RulerProps {
   duration: number;
   zoom: number;
-  onSelectTime: (time: number) => void;
+  width: number;
+  onSelect: (time: number) => void;
 }
 
 const markerStepSeconds = (zoom: number) => {
@@ -15,7 +16,7 @@ const markerStepSeconds = (zoom: number) => {
   return 30;
 };
 
-export const Ruler: FC<RulerProps> = ({ duration, zoom, onSelectTime }) => {
+export const Ruler: FC<RulerProps> = ({ duration, zoom, width, onSelect }) => {
   const step = markerStepSeconds(zoom);
   const markers = [];
   for (let time = 0; time <= duration; time += step) {
@@ -25,11 +26,14 @@ export const Ruler: FC<RulerProps> = ({ duration, zoom, onSelectTime }) => {
   return (
     <div
       className="timeline-ruler"
+      style={{ width }}
       onPointerDown={(event) => {
+        event.preventDefault();
         const rect = event.currentTarget.getBoundingClientRect();
         const offset = event.clientX - rect.left;
-        const time = offset / zoom;
-        onSelectTime(Math.max(0, time));
+        const scrollLeft = event.currentTarget.scrollLeft;
+        const time = (offset + scrollLeft) / zoom;
+        onSelect(time);
       }}
     >
       {markers.map((time) => (

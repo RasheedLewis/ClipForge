@@ -170,6 +170,14 @@ textarea {
   flex-direction: column;
 }
 
+.panel__content--preview {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  align-items: stretch;
+  justify-content: center;
+}
+
 .panel__content--scroll {
   overflow-y: auto;
   gap: 0;
@@ -498,6 +506,7 @@ textarea {
   position: relative;
   height: 32px;
   border-bottom: 1px solid var(--color-border);
+  overflow: hidden;
 }
 
 .timeline-ruler {
@@ -626,4 +635,72 @@ textarea {
 
 .clip-card__thumbnail-image {
   display: block;
+}
+
+.preview {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: color-mix(in srgb, var(--color-surface-alt) 90%, black 10%);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  padding: var(--space-md);
+  min-height: 240px;
+}
+
+.preview__surface {
+  position: relative;
+  width: 100%;
+  max-width: 720px;
+  aspect-ratio: 16 / 9;
+  background: black;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  box-shadow: 0 10px 32px rgba(15, 23, 42, 0.55);
+}
+
+.preview__video {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.transport {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  background: color-mix(in srgb, var(--color-surface-alt) 85%, black 15%);
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+}
+
+.transport__button {
+  border: 1px solid color-mix(in srgb, var(--color-primary) 35%, transparent);
+  background: color-mix(in srgb, var(--color-primary) 18%, transparent);
+  color: var(--color-text-light);
+  padding: 6px 16px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.8rem;
+  transition: var(--transition);
+}
+
+.transport__button:hover {
+  background: color-mix(in srgb, var(--color-primary) 28%, transparent);
+}
+
+.transport__time {
+  font-size: 0.85rem;
+  color: rgba(226, 232, 240, 0.7);
+  display: flex;
+  gap: 4px;
+  font-feature-settings: 'tnum';
+}
+
+.transport__seek {
+  flex: 1;
+  accent-color: var(--color-accent);
 }
