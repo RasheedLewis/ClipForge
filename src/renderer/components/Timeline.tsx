@@ -9,8 +9,8 @@ import {
   DragOverEvent,
 } from '@dnd-kit/core';
 import { SortableContext } from '@dnd-kit/sortable';
-import { useEffect, useRef, useState } from 'react';
-import { useTimelineStore, type TimelineTrack } from '../store/timeline';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useTimelineStore, type TimelineTrack, MIN_CLIP_DURATION } from '../store/timeline';
 import { Ruler } from './Ruler';
 import { Track } from './Track';
 import { ClipItem } from './ClipItem';
@@ -24,12 +24,20 @@ export const Timeline: FC = () => {
   const setPlayhead = useTimelineStore((state) => state.setPlayhead);
   const setZoom = useTimelineStore((state) => state.setZoom);
   const getTrackClips = useTimelineStore((state) => state.getTrackClips);
-  const reorderClip = useTimelineStore((state) => state.reorderClip);
-  const moveClip = useTimelineStore((state) => state.moveClip);
+  const removeClip = useTimelineStore((state) => state.removeClip);
+  const splitClip = useTimelineStore((state) => state.splitClip);
+  const getClip = useTimelineStore((state) => state.getClip);
+  const positionClip = useTimelineStore((state) => state.positionClip);
 
   const [activeClipId, setActiveClipId] = useState<string | null>(null);
+  const [contextMenu, setContextMenu] = useState<{ clipId: string; x: number; y: number } | null>(
+    null,
+  );
   const tracksRef = useRef<HTMLDivElement | null>(null);
   const rulerRef = useRef<HTMLDivElement | null>(null);
+  const dragOriginRef = useRef<{ clipId: string; start: number; track: TimelineTrack } | null>(
+    null,
+  );
 
   useEffect(() => {
     const container = tracksRef.current;
@@ -58,9 +66,19 @@ export const Timeline: FC = () => {
   const duration = Math.max(60, Math.max(...clips.map((clip) => clip.start + clip.duration), 0));
   const trackWidth = Math.max(duration * zoom + 200, 800);
 
-  const handleDragStart = (event: DragStartEvent) => {
-    setActiveClipId(event.active.id as string);
-  };
+  const handleDragStart = useCallback(
+    (event: DragStartEvent) => {
+      const clipId = event.active.id as string;
+      setActiveClipId(clipId);
+      setContextMenu(null);
+
+      const clip = clips.find((item) => item.id === clipId);
+      if (clip) {
+        dragOriginRef.current = { clipId, start: clip.start, track: clip.track };
+      }
+    },
+    [clips],
+  );
 
   const handleDragOver = (event: DragOverEvent) => {
     if (!event.over || !activeClipId) {
@@ -72,49 +90,68 @@ export const Timeline: FC = () => {
     }
   };
 
-  const handleDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event;
-    if (!over) {
+  const handleDragEnd = useCallback(
+    (event: DragEndEvent) => {
+      const { active, over, delta } = event;
+      const origin = dragOriginRef.current;
+      dragOriginRef.current = null;
       setActiveClipId(null);
-      return;
-    }
 
-    if (over.id === active.id) {
-      setActiveClipId(null);
-      return;
-    }
+      if (!origin || (over && over.id === active.id)) {
+        return;
+      }
 
-    const activeId = active.id as string;
-    const overId = over.id as string;
-
-    const targetTrack = parseTrackId(overId);
-    if (targetTrack) {
-      const trackClips = getTrackClips(targetTrack);
-      moveClip(activeId, targetTrack, trackClips.length);
-    } else {
-      const overClip = clips.find((clip) => clip.id === overId);
-      const activeClip = clips.find((clip) => clip.id === activeId);
-      if (overClip && activeClip) {
-        if (overClip.track === activeClip.track) {
-          const trackClips = getTrackClips(activeClip.track);
-          const targetIndex = trackClips.findIndex((clip) => clip.id === overClip.id);
-          reorderClip(activeClip.id, targetIndex);
+      let targetTrack: TimelineTrack = origin.track;
+      if (over) {
+        const overId = over.id as string;
+        const parsedTrack = parseTrackId(overId);
+        if (parsedTrack) {
+          targetTrack = parsedTrack;
         } else {
-          const targetTrackClips = getTrackClips(overClip.track);
-          const targetIndex = targetTrackClips.findIndex((clip) => clip.id === overClip.id);
-          moveClip(activeClip.id, overClip.track, targetIndex);
+          const overClip = clips.find((clip) => clip.id === overId);
+          if (overClip) {
+            targetTrack = overClip.track;
+          }
         }
       }
-    }
 
-    setActiveClipId(null);
-  };
+      const deltaSeconds = delta.x / zoom;
+      const proposedStart = origin.start + deltaSeconds;
+      positionClip(origin.clipId, targetTrack, proposedStart);
+    },
+    [clips, positionClip, zoom],
+  );
 
   useEffect(() => {
     if (!clips.length) {
       setPlayhead(0);
     }
   }, [clips, setPlayhead]);
+
+  useEffect(() => {
+    if (!contextMenu) {
+      return undefined;
+    }
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setContextMenu(null);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [contextMenu]);
+
+  useEffect(() => {
+    if (!contextMenu) {
+      return;
+    }
+    const exists = clips.some((clip) => clip.id === contextMenu.clipId);
+    if (!exists) {
+      setContextMenu(null);
+    }
+  }, [clips, contextMenu]);
 
   const handleRulerSelect = (time: number) => {
     setPlayhead(Math.max(0, time));
@@ -127,6 +164,59 @@ export const Timeline: FC = () => {
     }),
     { main: [], overlay: [] },
   );
+
+  const handleClipContextMenu = useCallback(
+    (clipId: string, position: { x: number; y: number }) => {
+      setContextMenu({ clipId, ...position });
+    },
+    [],
+  );
+
+  const contextClip = useMemo(
+    () => (contextMenu ? (getClip(contextMenu.clipId) ?? null) : null),
+    [contextMenu, getClip],
+  );
+
+  const canSplit = useMemo(() => {
+    if (!contextClip) {
+      return false;
+    }
+    const clipStart = contextClip.start + MIN_CLIP_DURATION;
+    const clipEnd = contextClip.start + contextClip.duration - MIN_CLIP_DURATION;
+    return playhead > clipStart && playhead < clipEnd;
+  }, [contextClip, playhead]);
+
+  const handleSplitAtPlayhead = () => {
+    if (!contextClip || !canSplit) {
+      return;
+    }
+    splitClip(contextClip.id, playhead);
+    setContextMenu(null);
+  };
+
+  const handleDeleteClip = () => {
+    if (!contextClip) {
+      return;
+    }
+    removeClip(contextClip.id);
+    setContextMenu(null);
+  };
+
+  const closeContextMenu = () => setContextMenu(null);
+
+  const menuPosition = useMemo(() => {
+    if (!contextMenu || typeof window === 'undefined') {
+      return null;
+    }
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+    const menuWidth = 200;
+    const menuHeight = 120;
+    const margin = 12;
+    const x = Math.min(contextMenu.x, viewportWidth - menuWidth - margin);
+    const y = Math.min(contextMenu.y, viewportHeight - menuHeight - margin);
+    return { x: Math.max(margin, x), y: Math.max(margin, y) };
+  }, [contextMenu]);
 
   return (
     <div className="timeline">
@@ -152,7 +242,7 @@ export const Timeline: FC = () => {
         <div className="timeline__ruler" ref={rulerRef}>
           <Ruler duration={duration} zoom={zoom} width={trackWidth} onSelect={handleRulerSelect} />
         </div>
-        <div className="timeline__tracks" ref={tracksRef}>
+        <div className="timeline__tracks" ref={tracksRef} onPointerDown={closeContextMenu}>
           <DndContext
             sensors={sensors}
             onDragEnd={handleDragEnd}
@@ -171,7 +261,11 @@ export const Timeline: FC = () => {
                       key={clip.id}
                       clip={clip}
                       zoom={zoom}
-                      isSelected={clip.id === activeClipId}
+                      isSelected={
+                        clip.id === activeClipId || clip.id === contextMenu?.clipId || false
+                      }
+                      onContextMenu={handleClipContextMenu}
+                      onCloseContextMenu={closeContextMenu}
                     />
                   ))}
                 </Track>
@@ -183,6 +277,33 @@ export const Timeline: FC = () => {
           </div>
         </div>
       </div>
+      {contextMenu ? (
+        <>
+          <div className="timeline-context-menu-backdrop" onPointerDown={closeContextMenu} />
+          {menuPosition ? (
+            <div
+              className="timeline-context-menu"
+              style={{ top: `${menuPosition.y}px`, left: `${menuPosition.x}px` }}
+            >
+              <button
+                type="button"
+                className="timeline-context-menu__item"
+                onClick={handleSplitAtPlayhead}
+                disabled={!canSplit}
+              >
+                Split at Playhead
+              </button>
+              <button
+                type="button"
+                className="timeline-context-menu__item"
+                onClick={handleDeleteClip}
+              >
+                Delete Clip
+              </button>
+            </div>
+          ) : null}
+        </>
+      ) : null}
     </div>
   );
 };

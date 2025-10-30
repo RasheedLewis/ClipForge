@@ -1,4 +1,5 @@
 import type { FC } from 'react';
+import { useEffect, useRef } from 'react';
 import { formatBitrate, formatBytes, formatDuration } from '../utils/format';
 import type { MediaClip } from '../store/media';
 
@@ -20,14 +21,25 @@ export const ClipCard: FC<ClipCardProps> = ({ clip, onRemove, onAddToTimeline })
       ? metadata.video.frameRate
       : undefined;
 
-  if (clip.thumbnail) {
-    console.info('[ClipCard] Rendering thumbnail', {
-      clipId: clip.id,
-      thumbnailLength: clip.thumbnail.length,
-    });
-  } else {
-    console.info('[ClipCard] No thumbnail present for clip', clip.id);
-  }
+  const loggedThumbnailRef = useRef<string | null>(null);
+  const loggedMissingRef = useRef(false);
+
+  useEffect(() => {
+    if (clip.thumbnail) {
+      if (loggedThumbnailRef.current !== clip.thumbnail) {
+        console.info('[ClipCard] Rendering thumbnail', {
+          clipId: clip.id,
+          thumbnailLength: clip.thumbnail.length,
+        });
+        loggedThumbnailRef.current = clip.thumbnail;
+      }
+      loggedMissingRef.current = false;
+    } else if (!loggedMissingRef.current) {
+      console.info('[ClipCard] No thumbnail present for clip', clip.id);
+      loggedMissingRef.current = true;
+      loggedThumbnailRef.current = null;
+    }
+  }, [clip.id, clip.thumbnail]);
 
   return (
     <article className="clip-card">

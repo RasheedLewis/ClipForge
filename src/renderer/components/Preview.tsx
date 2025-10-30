@@ -61,8 +61,9 @@ export const Preview = ({ className }: PreviewProps) => {
       }
 
       if (!activeClip) {
-        videoRef.current.removeAttribute('src');
-        videoRef.current.load();
+        if (videoRef.current.src && !videoRef.current.paused) {
+          videoRef.current.pause();
+        }
         setActiveClipId(null);
         return;
       }
@@ -79,9 +80,15 @@ export const Preview = ({ className }: PreviewProps) => {
           setActiveClipId(activeClip.id);
         }
 
-        const clipTime = Math.max(0, playhead - activeClip.start);
-        if (Math.abs(videoRef.current.currentTime - clipTime) > 0.1) {
-          videoRef.current.currentTime = clipTime;
+        const mediaClip = getMediaClip(activeClip.mediaId);
+        const mediaDuration = mediaClip?.metadata.duration;
+        const relativeTime = Math.max(0, playhead - activeClip.start);
+        const targetTime = activeClip.inPoint + relativeTime;
+        const clampedTime =
+          typeof mediaDuration === 'number' ? Math.min(targetTime, mediaDuration) : targetTime;
+        const tolerance = playback.isPlaying ? 0.25 : 0.02;
+        if (Math.abs(videoRef.current.currentTime - clampedTime) > tolerance) {
+          videoRef.current.currentTime = clampedTime;
         }
 
         if (playback.isPlaying) {
