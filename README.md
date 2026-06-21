@@ -19,6 +19,8 @@
   <a href="#-license">📜 License</a>
 </p>
 
+[Video Demo](https://www.loom.com/share/b88dc2323eac4028bda088bf31714236)
+
 ---
 
 ## 🔥 Overview
